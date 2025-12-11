@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="hy">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Մանկական Կայք</title>
+  <style>
+    body { margin:0; font-family: Arial,sans-serif; background: linear-gradient(90deg,#7bb6ff 50%,#ff9ad5 50%); min-height:100vh; display:flex; flex-direction:column; align-items:center; padding:20px 0; }
+    header { width:100%; background:rgba(255,255,255,0.6); text-align:center; padding:18px 0; font-size:28px; font-weight:bold; backdrop-filter:blur(4px); border-bottom-left-radius:14px; border-bottom-right-radius:14px; }
+    .container { width:92%; max-width:900px; background:white; padding:20px; margin-top:24px; border-radius:16px; box-shadow:0 6px 20px rgba(0,0,0,0.12); }
+    .section-title { font-size:22px; margin-bottom:10px; }
+    .box { margin-top:12px; padding:14px; border-radius:12px; background:#f6f8ff; }
+    input[type=password], input[type=text] { width:100%; padding:10px; border-radius:8px; border:1px solid #cfcfe6; margin-bottom:10px; box-sizing:border-box; }
+    textarea { font-family: inherit; width:100%; }
+    button { padding:10px 14px; border:none; border-radius:8px; background:#7bb6ff; font-size:15px; cursor:pointer; transition:0.18s; }
+    button.secondary { background:transparent; border:1px solid #7bb6ff; color:#165a9a; }
+    button:hover { transform:translateY(-2px); }
+    #adminPanel { display:none; margin-top:18px; padding:12px; background:#fff0fb; border-radius:12px; }
+    .small { font-size:13px; color:#444; }
+    .row { display:flex; gap:10px; }
+    .row > * { flex:1; }
+    footer { margin-top:20px; font-size:13px; color:#222; opacity:0.8; }
+    ul { list-style:none; padding-left:0; }
+    li { margin-bottom:8px; }
+  </style>
+</head>
+<body>
+<header>ՄԵՐ ՄԱՆԿԱԿԱՆ ԱՇԽԱՐՀԸ</header>
+<div class="container">
+  <div class="section-title">Բարի գալուստ</div>
+  <p class="small">Այս կայքը նախատեսված է երեխաների համար՝ հեքիաթներով, բանաստեղծություններով և առակներով։ Նախ՝ պետք է ստեղծել գաղտնաբառ, որի միջոցով միայն դու կկարողանաս մուտք գործել կառավարման վահանակ։</p>
+
+  <div id="setupBox" class="box" style="display:none;">
+    <div class="section-title">Սկսելու համար՝ ստեղծիր գաղտնաբառ</div>
+    <input type="password" id="newPass" placeholder="Գաղտնաբառ (քեզ համար հեշտը ու անվտանգ)" />
+    <input type="password" id="confirmPass" placeholder="Հաստատիր գաղտնաբառը" />
+    <div class="row">
+      <button onclick="createPassword()">Ստեղծել գաղտնաբառ</button>
+      <button class="secondary" onclick="resetSite()">Վերականգնել</button>
+    </div>
+  </div>
+
+  <div id="loginBox" class="box" style="display:none;">
+    <div class="section-title">Մուտք կառավարման մեջ</div>
+    <input type="password" id="pass" placeholder="Մուտքագրիր գաղտնաբառը" />
+    <div class="row">
+      <button onclick="checkPass()">Մուտք</button>
+      <button class="secondary" onclick="showChangePass()">Փոխել գաղտնաբառը</button>
+    </div>
+  </div>
+
+  <div id="changeBox" class="box" style="display:none;">
+    <div class="section-title">Փոխել գաղտնաբառը</div>
+    <input type="password" id="oldPass" placeholder="Ընթացիկ գաղտնաբառ" />
+    <input type="password" id="newPass2" placeholder="Նոր գաղտնաբառ" />
+    <input type="password" id="confirmPass2" placeholder="Հաստատիր նորը" />
+    <div class="row"><button onclick="changePassword()">Փոխել</button><button class="secondary" onclick="hideChangePass()">Չեղարկել</button></div>
+  </div>
+
+  <div id="adminPanel">
+    <h3>Կառավարման Վահանակ</h3>
+    <p class="small">Դու մուտք գործեցիր։ Այստեղից կարող ես ավելացնել նյութեր և կառավարել կայքի բովանդակությունը։</p>
+    <div style="margin-top:10px">
+      <button onclick="logout()">Ելք</button>
+      <button class="secondary" onclick="openEditor()">Ավելացնել Նյութ</button>
+    </div>
+    <div id="editor" style="display:none; margin-top:10px;">
+      <input type="text" id="title" placeholder="Վերնագիր" />
+      <select id="type"><option value="hekiat">Հեքիաթ</option><option value="poem">Բանաստեղծություն</option><option value="ax">Առակ</option></select>
+      <textarea id="content" placeholder="Տեքստը այստեղ" style="height:140px; margin-top:8px;"></textarea>
+      <input type="text" id="mediaUrl" placeholder="YouTube վիդեո հղում" style="margin-top:8px;" />
+      <div class="row"><button onclick="saveContent()">Պահպանել</button><button class="secondary" onclick="closeEditor()">Փակել</button></div>
+    </div>
+    <ul id="savedList" style="margin-top:12px;"></ul>
+  </div>
+</div>
+<footer>Կայքի նախնական տեսքի օրինակ</footer>
+<script>
+// Հիմնական ֆունկցիաներ
+function hasPassword() { return !!localStorage.getItem('kidsSitePassword'); }
+function showInitial() { document.getElementById('setupBox').style.display = hasPassword() ? 'none' : 'block'; document.getElementById('loginBox').style.display = hasPassword() ? 'block' : 'none'; document.getElementById('adminPanel').style.display = 'none'; document.getElementById('changeBox').style.display = 'none'; }
+function createPassword() { const p=document.getElementById('newPass').value; const c=document.getElementById('confirmPass').value; if(!p||p.length<4){alert('Գաղտնաբառը պետք է առնվազն 4 նիշ լինի.'); return;} if(p!==c){alert('Գաղտնաբառները չեն համընկնում'); return;} localStorage.setItem('kidsSitePassword',p); alert('Գաղտնաբառը ստեղծվեց։'); showInitial(); }
+function checkPass() { const input=document.getElementById('pass').value; const correct=localStorage.getItem('kidsSitePassword'); if(input===correct){document.getElementById('adminPanel').style.display='block'; document.getElementById('loginBox').style.display='none'; loadSaved();} else{alert('Սխալ գաղտնաբառ');}}
+function openEditor(){document.getElementById('editor').style.display='block';}
+function closeEditor(){document.getElementById('editor').style.display='none';}
+
+// Նյութեր պահելու համար GitHub/Netlify հոսթինգով
+function saveContent(){
+  const t=document.getElementById('title').value.trim();
+  const typ=document.getElementById('type').value;
+  const cont=document.getElementById('content').value.trim();
+  const media=document.getElementById('mediaUrl').value.trim();
+  if(!t||!cont){alert('Գրեք վերնագիր և բովանդակություն'); return;}
+  const items=JSON.parse(localStorage.getItem('kidsContents')||'[]');
+  const id=Date.now();
+  items.unshift({id,title:t,type:typ,content:cont,media:media});
+  localStorage.setItem('kidsContents',JSON.stringify(items));
+  document.getElementById('title').value='';
+  document.getElementById('content').value='';
+  document.getElementById('mediaUrl').value='';
+  loadSaved();
+  alert('Բովանդակությունը պահպանվեց տեղականում');
+}
+
+function loadSaved(){
+  const list=JSON.parse(localStorage.getItem('kidsContents')||'[]');
+  const el=document.getElementById('savedList'); if(!el) return; el.innerHTML='';
+  if(!list.length){el.innerHTML='<p class="small">Պահպանված նյութեր չկան</p>'; return;}
+  list.forEach(item=>{
+    const li=document.createElement('li');
+    li.dataset.id=item.id;
+    li.innerHTML='<b>'+escapeHtml(item.title)+'</b> ('+escapeHtml(item.type)+') ';
+    const btnView=document.createElement('button'); btnView.textContent='Դիտել'; btnView.onclick=function(){ preview(item.id); };
+    const btnDel=document.createElement('button'); btnDel.textContent='Ջնջել'; btnDel.onclick=function(){ deleteItem(item.id); };
+    li.appendChild(btnView); li.appendChild(document.createTextNode(' ')); li.appendChild(btnDel);
+    el.appendChild(li);
+  });
+}
+
+function preview(id){
+  const list=JSON.parse(localStorage.getItem('kidsContents')||'[]');
+  const it=list.find(x=>x.id===id);
+  if(!it) return alert('Գտնվեց սխալ');
+  const win=window.open('', '_blank', 'width=900,height=500,scrollbars=yes');
+  if(win){
+    win.document.open();
+    win.document.write(`
+      <html><head><meta charset="utf-8"><title>${escapeHtml(it.title)}</title>
+      <style>body{font-family:Arial,sans-serif;display:flex;gap:12px;padding:12px;}.text{flex:1;overflow:auto;white-space:pre-wrap;}.media{flex:1;} h2{margin-top:0;}</style></head>
+      <body>
+        <div class="text"><h2>${escapeHtml(it.title)}</h2><pre>${escapeHtml(it.content)}</pre></div>
+        ${it.media ? `<div class="media"><iframe width="100%" height="315" src="${convertYouTubeURL(it.media)}" title="Video" frameborder="0" allowfullscreen></iframe></div>` : ''}
+      </body></html>
+    `);
+    win.document.close();
+  } else { alert('Չհաջողվեց բացել նոր պատուհան'); }
+}
+function convertYouTubeURL(url){ const match = url.match(/v=([a-zA-Z0-9_-]+)/); return match ? `https://www.youtube.com/embed/${match[1]}` : url; }
+function deleteItem(id){if(!confirm('Ջնջե՞լ այս նյութը։')) return; let list=JSON.parse(localStorage.getItem('kidsContents')||'[]'); list=list.filter(x=>x.id!==id); localStorage.setItem('kidsContents',JSON.stringify(list)); loadSaved();}
+function escapeHtml(str){return str?String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'):'';}
+showInitial();
+</script>
+</body>
+</html>
